@@ -1,54 +1,50 @@
 from fastapi import APIRouter, HTTPException
-from database import usuarios
+from database import reservas
+from schemas.reservas import ReservaCreate, ReservaUpdate
 
-router = APIRouter(prefix="/usuarios", tags=["Usuários"])
+router = APIRouter(prefix="/reservas", tags=["Reservas"])
 
 
 @router.get("/")
 def listar():
-    return usuarios
+    return reservas
 
 
 @router.get("/{id}")
 def listar_por_id(id: int):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            return usuario
-    raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    for reserva in reservas:
+        if reserva["id"] == id:
+            return reserva
+    raise HTTPException(status_code=404, detail="Reserva não encontrada")
 
 
 @router.post("/cadastrar")
-def cadastrar(usuario: dict):
-    for u in usuarios:
-        if usuario["email"] == u["email"]:
-            raise HTTPException(status_code=400, detail="Já existe um usuário com esse email")
+def cadastrar(reserva: ReservaCreate):
+    nova_reserva = reserva.dict()
+    nova_reserva["id"] = len(reservas) + 1
+    reservas.append(nova_reserva)
 
-    usuario["id"] = len(usuarios) + 1
-    usuarios.append(usuario)
-    return {"mensagem": "Usuário cadastrado com sucesso", "usuario": usuario}
-
-
-@router.post("/login")
-def login(dados: dict):
-    for usuario in usuarios:
-        if usuario["email"] == dados["email"] and usuario["senha"] == dados["senha"]:
-            return {"mensagem": "Login realizado com sucesso"}
-    raise HTTPException(status_code=401, detail="Email ou senha inválidos")
+    return {
+        "mensagem": "Reserva cadastrada com sucesso",
+        "reserva": nova_reserva
+    }
 
 
 @router.patch("/{id}")
-def atualizar(id: int, dados: dict):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            usuario.update(dados)
-            return usuario
-    raise HTTPException(status_code=404, detail="Usuário não encontrado")
+def atualizar(id: int, dados: ReservaUpdate):
+    for reserva in reservas:
+        if reserva["id"] == id:
+            reserva.update(dados.dict(exclude_unset=True))
+            return reserva
+
+    raise HTTPException(status_code=404, detail="Reserva não encontrada")
 
 
 @router.delete("/{id}")
 def deletar(id: int):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            usuarios.remove(usuario)
-            return {"mensagem": "Usuário removido"}
-    raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    for reserva in reservas:
+        if reserva["id"] == id:
+            reservas.remove(reserva)
+            return {"mensagem": "Reserva removida"}
+
+    raise HTTPException(status_code=404, detail="Reserva não encontrada")

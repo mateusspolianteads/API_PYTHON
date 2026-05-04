@@ -1,16 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from database import usuarios
+from schemas.usuario import UsuarioCreate, LoginRequest, UsuarioUpdate
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
 
-# Listar todos
 @router.get("/")
 def listar():
     return usuarios
 
 
-# Buscar por ID
 @router.get("/{id}")
 def listar_por_id(id: int):
     for usuario in usuarios:
@@ -19,41 +18,49 @@ def listar_por_id(id: int):
     raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
 
-# Cadastro
-@router.post("/cadastro")
-def cadastrar(usuario: dict):
-    usuario["id"] = len(usuarios) + 1
-    usuarios.append(usuario)
+@router.post("/cadastrar")
+def cadastrar(usuario: UsuarioCreate):
+    for u in usuarios:
+        if usuario.email == u["email"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Já existe um usuário com esse email"
+            )
+
+    novo_usuario = usuario.dict()
+    novo_usuario["id"] = len(usuarios) + 1
+    usuarios.append(novo_usuario)
+
     return {
         "mensagem": "Usuário cadastrado com sucesso",
-        "usuario": usuario
+        "usuario": novo_usuario
     }
 
 
-# Login
 @router.post("/login")
-def login(dados: dict):
+def login(dados: LoginRequest):
     for usuario in usuarios:
-        if usuario["email"] == dados["email"] and usuario["senha"] == dados["senha"]:
+        if usuario["email"] == dados.email and usuario["senha"] == dados.senha:
             return {"mensagem": "Login realizado com sucesso"}
+
     raise HTTPException(status_code=401, detail="Email ou senha inválidos")
 
 
-# Atualizar
 @router.patch("/{id}")
-def atualizar(id: int, dados: dict):
+def atualizar(id: int, dados: UsuarioUpdate):
     for usuario in usuarios:
         if usuario["id"] == id:
-            usuario.update(dados)
+            usuario.update(dados.dict(exclude_unset=True))
             return usuario
+
     raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
 
-# Deletar
 @router.delete("/{id}")
 def deletar(id: int):
     for usuario in usuarios:
         if usuario["id"] == id:
             usuarios.remove(usuario)
             return {"mensagem": "Usuário removido"}
+
     raise HTTPException(status_code=404, detail="Usuário não encontrado")
