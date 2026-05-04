@@ -1,0 +1,4 @@
+usuarios = []
+excursoes = []
+clientes = []
+reservas = []
