@@ -10,7 +10,7 @@ class ExcursaoCreate(BaseModel):
     valor: float
     vagas: int
 
-
+    
 class ExcursaoUpdate(BaseModel):
     destino: Optional[str] = None
     evento: Optional[str] = None
