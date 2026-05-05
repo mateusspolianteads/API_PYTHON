@@ -20,7 +20,7 @@ def listar_por_id(id: int):
 
 @router.post("/cadastrar")
 def cadastrar(cliente: ClienteCreate):
-    novo_cliente = cliente.dict()
+    novo_cliente = cliente.model_dump()
     novo_cliente["id"] = len(clientes) + 1
     clientes.append(novo_cliente)
 
@@ -34,8 +34,16 @@ def cadastrar(cliente: ClienteCreate):
 def atualizar(id: int, dados: ClienteUpdate):
     for cliente in clientes:
         if cliente["id"] == id:
-            cliente.update(dados.dict(exclude_unset=True))
-            return cliente
+            dados_atualizados = dados.model_dump(
+                exclude_unset=True,
+                exclude_none=True
+            )
+            cliente.update(dados_atualizados)
+
+            return {
+                "mensagem": "Cliente atualizado com sucesso",
+                "cliente": cliente
+            }
 
     raise HTTPException(status_code=404, detail="Cliente não encontrado")
 
@@ -45,6 +53,6 @@ def deletar(id: int):
     for cliente in clientes:
         if cliente["id"] == id:
             clientes.remove(cliente)
-            return {"mensagem": "Cliente removido"}
+            return {"mensagem": "Cliente removido com sucesso"}
 
     raise HTTPException(status_code=404, detail="Cliente não encontrado")
